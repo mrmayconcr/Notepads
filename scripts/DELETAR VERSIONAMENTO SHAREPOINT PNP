@@ -1,0 +1,373 @@
+LIMPEZA GERAL
+
+#Parametros
+$SiteURL = "https://embraer.sharepoint.com/sites/EquityStory"
+$PolicyName = "20 years policy"
+ 
+Try {
+  
+    Connect-IPPSSession
+ 
+    $Policy = Get-RetentionCompliancePolicy -Identity $PolicyName
+ 
+    If($Policy)
+    {
+        #ADD EXCEÇÃO
+        Set-RetentionCompliancePolicy -AddSharePointLocationException $SiteURL -Identity $Policy.Name
+    }
+}
+Catch {
+    write-host "Error: $($_.Exception.Message)" -foregroundcolor Red
+}
+
+
+#Config Variables
+
+$ListName = "documentos"
+$VersionsToKeep = 3
+
+#Connect to PnP Online
+Connect-PnPOnline -Url $SiteURL -Interactive
+
+#Get the Context
+$Ctx= Get-PnPContext
+
+#Get All Items from the List - Exclude 'Folder' List Items
+$ListItems = Get-PnPListItem -List $ListName -Query "<View Scope='RecursiveAll'><Query><Where><Eq><FieldRef Name='FSObjType'/><Value Type='Integer'>0</Value></Eq></Where></Query></View>"
+
+ForEach ($Item in $ListItems)
+{
+    #Get File Versions
+    $File = $Item.File
+    $Versions = $File.Versions
+    $Ctx.Load($File)
+    $Ctx.Load($Versions)
+    $Ctx.ExecuteQuery()
+
+    Write-host -f Yellow "Scanning File:"$File.Name
+    $VersionsCount = $Versions.Count
+    $VersionsToDelete = $VersionsCount - $VersionsToKeep
+    If($VersionsToDelete -gt 0)
+    {
+        write-host -f Cyan "`t Total Number of Versions of the File:" $VersionsCount
+        #Delete versions
+        For($i=0; $i -lt $VersionsToDelete; $i++)
+        {
+            write-host -f Cyan "`t Deleting Version:" $Versions[0].VersionLabel
+            $Versions[0].DeleteObject()
+        }
+        $Ctx.ExecuteQuery()
+        Write-Host -f Green "`t Version History is cleaned for the File:"$File.Name
+    }
+}
+
+LIMPEZA FOLDER BY FOLDER
+
+#Parameters
+$SiteURL = "https://embraer.sharepoint.com/sites/InvestorRelations"
+$LibraryName ="Documents"
+ 
+#Function to Clear all File versions in a Folder
+Function Cleanup-Versions([Microsoft.SharePoint.Client.Folder]$Folder)
+{
+    Write-host "Processing Folder:"$Folder.ServerRelativeUrl -f Yellow
+    #Get the Site Relative URL of the folder
+    $FolderSiteRelativeURL = $Folder.ServerRelativeURL.Replace($Web.ServerRelativeURL,[string]::Empty)
+ 
+    #Get All Files from the folder    
+    $Files = Get-PnPFolderItem -FolderSiteRelativeUrl $FolderSiteRelativeURL -ItemType File
+     
+    #Iterate through each file
+    ForEach ($File in $Files)
+    {
+        #Get File Versions
+        $Versions = Get-PnPProperty -ClientObject $File -Property Versions 
+        Write-host -f Yellow "`tScanning File:"$File.Name
+      
+        If($Versions.Count -gt 0)
+        {
+            #Delete all versions
+            $Versions.DeleteAll()
+            Invoke-PnPQuery
+            Write-Host -f Green "`t`tDeleted All Previous Versions of the File:"$File.Name
+        }
+    }
+ 
+    #Get Sub-folders from the folder - Exclude "Forms" and Hidden folders
+    $SubFolders = Get-PnPFolderItem -FolderSiteRelativeUrl $FolderSiteRelativeURL -ItemType Folder | Where {($_.Name -ne "Forms") -and (-Not($_.Name.StartsWith("_")))}
+    Foreach($SubFolder in $SubFolders)
+    {
+        #Call the function recursively
+        Cleanup-Versions -Folder $SubFolder    
+    }
+}
+  
+#Connect to PnP Online
+Connect-PnPOnline -Url $SiteURL -Interactive
+$Web = Get-PnPWeb
+ 
+#Get the Root Folder of the Library
+$RootFolder = Get-PnPList -Identity $LibraryName -Includes RootFolder | Select -ExpandProperty RootFolder
+ 
+#Call the function with Root Folder of the Library
+Cleanup-Versions -Folder $RootFolder
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+====================
+$ListItems = Get-PnPListItem -List $ListName -FolderServerRelativeUrl $FolderServerRelativeURL -PageSize 2000
+laboratorio
+
+#Config Variables
+$SiteURL = "https://embraer-my.sharepoint.com/personal/sys_pbi_embraer_com_br/"
+$ListName = "documentos"
+$VersionsToKeep = 10
+
+#Connect to PnP Online
+Connect-PnPOnline -Url $SiteURL -Interactive
+
+#Get the Context
+$Ctx= Get-PnPContext
+
+#Get All Folders from the document Library
+$Folders = Get-PnPFolder -List $ListName
+      
+Write-host "Total Number of Items in the Folder in the list:" $Folders.Count
+ 
+#Get Folder/Subfolder details
+#$Folders | Select Name, TimeCreated, ItemCount, ServerRelativeUrl
+
+#Get All Items from the List - Exclude 'Folder' List Items
+#$ListItems = Get-PnPListItem -List $ListName -Query "<View Scope='RecursiveAll'><Query><Where><Eq><FieldRef Name='FSObjType'/><Value Type='Integer'>0</Value></Eq></Where></Query></View>"
+
+$ListItems = Get-PnPListItem -List $ListName -FolderServerRelativeUrl $FolderServerRelativeURL -PageSize 2000
+
+foreach ($Folder in $ListItems) 
+{
+ForEach ($Item in $Folder)
+{
+    #Get File Versions
+    $File = $Item.File
+    $Versions = $File.Versions
+    $Ctx.Load($File)
+    $Ctx.Load($Versions)
+    $Ctx.ExecuteQuery()
+
+    Write-host -f Yellow "Scanning File:"$File.Name
+    $VersionsCount = $Versions.Count
+    $VersionsToDelete = $VersionsCount - $VersionsToKeep
+    If($VersionsToDelete -gt 0)
+    {
+        write-host -f Cyan "`t Total Number of Versions of the File:" $VersionsCount
+        #Delete versions
+        For($i=0; $i -lt $VersionsToDelete; $i++)
+        {
+            write-host -f Cyan "`t Deleting Version:" $Versions[0].VersionLabel
+            $Versions[0].DeleteObject()
+        }
+        $Ctx.ExecuteQuery()
+        Write-Host -f Green "`t Version History is cleaned for the File:"$File.Name
+    }
+}
+}
+====================
+
+#Config Variables
+$SiteURL = "https://embraer.sharepoint.com/sites/InvestorRelations"
+$ListName = "documentos"
+$VersionsToKeep = 10
+
+#Connect to PnP Online
+Connect-PnPOnline -Url $SiteURL -Interactive
+
+#Get the Context
+$Ctx= Get-PnPContext
+
+Try {
+    #Connect to PnP Online
+    Connect-PnPOnline -Url $SiteURL -Interactive
+   
+    #Get All Folders from the document Library
+    $Folders = Get-PnPFolder -List $ListName
+      
+    Write-host "Total Number of Items in the Folder in the list:" $Folders.Count
+ 
+    #Get Folder/Subfolder details
+    $Folders | Select Name, TimeCreated, ItemCount, ServerRelativeUrl
+}
+catch {
+    write-host "Error: $($_.Exception.Message)" -foregroundcolor Red
+}
+
+#Get All Items from the List - Exclude 'Folder' List Items
+$ListItems = Get-PnPListItem -List $ListName -Query "<View Scope='RecursiveAll'><Query><Where><Eq><FieldRef Name='FSObjType'/><Value Type='Integer'>0</Value></Eq></Where></Query></View>"
+
+ForEach ($Item in $ListItems)
+{
+    #Get File Versions
+    $File = $Item.File
+    $Versions = $File.Versions
+    $Ctx.Load($File)
+    $Ctx.Load($Versions)
+    $Ctx.ExecuteQuery()
+
+    Write-host -f Yellow "Scanning File:"$File.Name
+    $VersionsCount = $Versions.Count
+    $VersionsToDelete = $VersionsCount - $VersionsToKeep
+    If($VersionsToDelete -gt 0)
+    {
+        write-host -f Cyan "`t Total Number of Versions of the File:" $VersionsCount
+        #Delete versions
+        For($i=0; $i -lt $VersionsToDelete; $i++)
+        {
+            write-host -f Cyan "`t Deleting Version:" $Versions[0].VersionLabel
+            $Versions[0].DeleteObject()
+        }
+        $Ctx.ExecuteQuery()
+        Write-Host -f Green "`t Version History is cleaned for the File:"$File.Name
+    }
+}
+
+
+---------------------------
+
+
+#Config Variables
+$SiteURL = "https://embraer.sharepoint.com/sites/216-LogsticaGPX/"
+$ListName = "documentos"
+$VersionsToKeep = 10
+
+#Connect to PnP Online
+Connect-PnPOnline -Url $SiteURL -Interactive
+
+#Get the Context
+$Ctx= Get-PnPContext
+
+#Get All Items from the List - Exclude 'Folder' List Items
+$ListItems = Get-PnPListItem -List $ListName -Query "<View Scope='RecursiveAll'><Query><Where><Eq><FieldRef Name='FSObjType'/><Value Type='Integer'>0</Value></Eq></Where></Query></View>"
+
+ForEach ($Item in $ListItems)
+{
+    #Get File Versions
+    $File = $Item.File
+    $Versions = $File.Versions
+    $Ctx.Load($File)
+    $Ctx.Load($Versions)
+    $Ctx.ExecuteQuery()
+
+    Write-host -f Yellow "Scanning File:"$File.Name
+    $VersionsCount = $Versions.Count
+    $VersionsToDelete = $VersionsCount - $VersionsToKeep
+    If($VersionsToDelete -gt 0)
+    {
+        write-host -f Cyan "`t Total Number of Versions of the File:" $VersionsCount
+        #Delete versions
+        For($i=0; $i -lt $VersionsToDelete; $i++)
+        {
+            write-host -f Cyan "`t Deleting Version:" $Versions[0].VersionLabel
+            $Versions[0].DeleteObject()
+        }
+        $Ctx.ExecuteQuery()
+        Write-Host -f Green "`t Version History is cleaned for the File:"$File.Name
+    }
+}
+
+LIMPEZA FOLDER BY FOLDER
+
+#Parameters
+$SiteURL = "https://embraer.sharepoint.com/sites/Teste-N1IT"
+$LibraryName ="Documents"
+ 
+#Get the Context
+$Ctx= Get-PnPContext
+
+#Function to Clear all File versions in a Folder
+Function Cleanup-Versions([Microsoft.SharePoint.Client.Folder]$Folder)
+{
+    Write-host "Processing Folder:"$Folder.ServerRelativeUrl -f Yellow
+    #Get the Site Relative URL of the folder
+    $FolderSiteRelativeURL = $Folder.ServerRelativeURL.Replace($Web.ServerRelativeURL,[string]::Empty)
+ 
+    #Get All Files from the folder    
+    $Files = Get-PnPFolderItem -FolderSiteRelativeUrl $FolderSiteRelativeURL -ItemType File
+     
+    #Iterate through each file
+	
+    ForEach ($Item in $Files)
+{
+	$FileContext = $File.Context
+	$Ctx.Load($FileContext.ServerRelativeUrl)
+	#$Ctx= Get-PnPContext
+    #Get File Versions
+    #$File = $Item.File
+    $Versions = $File.Versions
+    #$Ctx.Load($File)
+    $Ctx.Load($File.ServerRelativeUrl)
+	#$Ctx.Load($Versions)
+	
+	ForEach ($version in $Versions) {
+  $Ctx.Load($version.VersionLabel)
+  $Ctx.Load($version.Created)
+}
+    $Ctx.ExecuteQuery()
+
+    Write-host -f Yellow "Scanning File:"$File.Name
+    $VersionsCount = $Versions.Count
+    $VersionsToDelete = $VersionsCount - $VersionsToKeep
+    If($VersionsToDelete -gt 0)
+    {
+        write-host -f Cyan "`t Total Number of Versions of the File:" $VersionsCount
+        #Delete versions
+        For($i=0; $i -lt $VersionsToDelete; $i++)
+        {
+            write-host -f Cyan "`t Deleting Version:" $Versions[0].VersionLabel
+            $Versions[0].DeleteObject()
+        }
+        $Ctx.ExecuteQuery()
+        Write-Host -f Green "`t Version History is cleaned for the File:"$File.Name
+    }
+}
+	<# ForEach ($File in $Files)
+    {
+        #Get File Versions
+        $Versions = Get-PnPProperty -ClientObject $File -Property Versions 
+        Write-host -f Yellow "`tScanning File:"$File.Name
+      
+        If($Versions.Count -gt 0)
+        {
+            #Delete all versions
+            $Versions.DeleteAll()
+            Invoke-PnPQuery
+            Write-Host -f Green "`t`tDeleted All Previous Versions of the File:"$File.Name
+        }
+    }
+ #>
+    #Get Sub-folders from the folder - Exclude "Forms" and Hidden folders
+    $SubFolders = Get-PnPFolderItem -FolderSiteRelativeUrl $FolderSiteRelativeURL -ItemType Folder | Where {($_.Name -ne "Forms") -and (-Not($_.Name.StartsWith("_")))}
+    Foreach($SubFolder in $SubFolders)
+    {
+        #Call the function recursively
+        Cleanup-Versions -Folder $SubFolder    
+    }
+}
+  
+#Connect to PnP Online
+Connect-PnPOnline -Url $SiteURL -Interactive
+$Web = Get-PnPWeb
+ 
+#Get the Root Folder of the Library
+$RootFolder = Get-PnPList -Identity $LibraryName -Includes RootFolder | Select -ExpandProperty RootFolder
+ 
+#Call the function with Root Folder of the Library
+Cleanup-Versions -Folder $RootFolder

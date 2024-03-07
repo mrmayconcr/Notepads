@@ -1,0 +1,25 @@
+Grupo de distribuição do time TECH de SALESFORCE.
+
+
+
+
+
+salesforce@embraer.com.br
+G_MLB_SALESFORCE@sin.embraer.com
+G_MLB_SALESFORCE@pt.embraer.com
+G_MLB_SALESFORCE@press.embraer.com.br
+G_MLB_SALESFORCE@pee.embraer.com.br
+
+G_MLB_SALESFORCE@nl.embraer.com
+G_MLB_SALESFORCE@ie.embraer.com
+G_MLB_SALESFORCE@globmail.com.br
+G_MLB_SALESFORCE@embraerfoundation.org
+G_MLB_SALESFORCE@embraerexecutivejets.com
+G_MLB_SALESFORCE@embraer.fr
+G_MLB_SALESFORCE@embraer.com.br
+G_MLB_SALESFORCE@embraer.com
+G_MLB_SALESFORCE@eccleasing.com
+G_MLB_SALESFORCE@bjs.embraer.com
+G_MLB_SALESFORCE@aerochain.com
+x500:/o=ExchangeLabs/ou=Exchange Administrative Group (FYDIBOHF23SPDLT)/cn=Recipients/cn=8aa68e0ae17549ea9314cde47c0ed137-G_MLB_SALES
+salesforce@embraer.onmicrosoft.com

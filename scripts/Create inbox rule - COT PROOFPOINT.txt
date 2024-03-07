@@ -1,0 +1,117 @@
+get-inboxrule -mailbox joseane.rodrigues@globmail.com.br -identity "cot mail" | select *
+
+Description                           : If the message:
+                                                the header of the message contains the words 'X-Proofpoint-Tag: circleoftrust'
+                                        Take the following actions:
+                                                move the message to folder 'Untrusted Senders'
+                                                and stop processing more rules on this message
+                                        Except if the message:
+                                                the header of the message contains the words 'X-Proofpoint-Spam-Reason: eusafe'
+
+Enabled                               : True
+Identity                              : JOSEANRO\1518568636220964865
+InError                               : False
+ErrorType                             : None
+Name                                  : CoT Mail
+Priority                              : 3
+RuleIdentity                          : 1518568636220964865
+SupportedByTask                       : True
+Legacy                                :
+BodyContainsWords                     : {}
+ExceptIfBodyContainsWords             : {}
+FlaggedForAction                      :
+ExceptIfFlaggedForAction              :
+FromAddressContainsWords              : {}
+ExceptIfFromAddressContainsWords      : {}
+From                                  :
+ExceptIfFrom                          :
+HasAttachment                         : False
+ExceptIfHasAttachment                 : False
+HasClassification                     :
+ExceptIfHasClassification             :
+HeaderContainsWords                   : {X-Proofpoint-Tag: circleoftrust}
+ExceptIfHeaderContainsWords           : {X-Proofpoint-Spam-Reason: eusafe}
+MessageTypeMatches                    :
+ExceptIfMessageTypeMatches            :
+MyNameInCcBox                         : False
+ExceptIfMyNameInCcBox                 : False
+MyNameInToBox                         : False
+ExceptIfMyNameInToBox                 : False
+MyNameInToOrCcBox                     : False
+ExceptIfMyNameInToOrCcBox             : False
+MyNameNotInToBox                      : False
+ExceptIfMyNameNotInToBox              : False
+ReceivedAfterDate                     :
+ExceptIfReceivedAfterDate             :
+ReceivedBeforeDate                    :
+ExceptIfReceivedBeforeDate            :
+RecipientAddressContainsWords         : {}
+ExceptIfRecipientAddressContainsWords : {}
+SentOnlyToMe                          : False
+ExceptIfSentOnlyToMe                  : False
+SentTo                                :
+ExceptIfSentTo                        :
+SubjectContainsWords                  : {}
+ExceptIfSubjectContainsWords          : {}
+SubjectOrBodyContainsWords            : {}
+ExceptIfSubjectOrBodyContainsWords    : {}
+WithImportance                        :
+ExceptIfWithImportance                :
+WithinSizeRangeMaximum                :
+ExceptIfWithinSizeRangeMaximum        :
+WithinSizeRangeMinimum                :
+ExceptIfWithinSizeRangeMinimum        :
+WithSensitivity                       :
+ExceptIfWithSensitivity               :
+ApplyCategory                         : {}
+ApplySystemCategory                   : {}
+CopyToFolder                          :
+DeleteMessage                         : False
+DeleteSystemCategory                  : {}
+ForwardAsAttachmentTo                 :
+ForwardTo                             :
+MarkAsRead                            : False
+MarkImportance                        :
+MoveToFolder                          : Untrusted Senders
+PinMessage                            : False
+RedirectTo                            :
+SendTextMessageNotificationTo         : {}
+SoftDeleteMessage                     : False
+StopProcessingRules                   : True
+MailboxOwnerId                        : JOSEANRO
+IsValid                               : True
+ObjectState                           : Unchanged
+
+
+
+
+---------------------------------------
+$users = @(
+    "luciano.santos@embraer.com.br"
+)
+
+$targetUser = "maycon.rocha365@globmail.com.br"
+
+foreach ($user in $users) {
+    Add-MailboxPermission -Identity $user -User $targetUser -AccessRights FullAccess -AutoMapping $false
+    Write-Host "Permissão Full Access adicionada para '$targetUser' na caixa de correio '$user'."
+    
+    $ruleName = "CoT AntiSpam"
+
+    # Verifica se a regra já existe
+    $existingRule = Get-InboxRule -Mailbox $user -Identity $ruleName -ErrorAction SilentlyContinue
+
+    if ($existingRule) {
+        Write-Host "A regra '$ruleName' já existe para o usuário $user."
+    } else {
+        # Criação da regra
+        New-inboxRule -Name "$rulename" -HeaderContainsWords "X-Proofpoint-Tag: circleoftrust" -ExceptIfHeaderContainsWords "X-Proofpoint-Spam-Reason: eusafe" -MoveToFolder $user":\Untrusted Senders" -Mailbox $user -StopProcessingRules $true
+
+        Write-Host "A regra '$ruleName' foi criada para o usuário $user."
+    }
+	
+	Remove-MailboxPermission -Identity $user -User $targetUser -AccessRights FullAccess -Confirm:$false
+    Write-Host "Permissão Full Access removida para '$targetUser' na caixa de correio '$user'."
+}
+
+

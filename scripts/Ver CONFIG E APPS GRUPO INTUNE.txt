@@ -1,0 +1,74 @@
+# Conecte-se à API do Graph do Microsoft 365 e atualize o schema para a versão beta.
+Connect-MSGraph -ForceInteractive
+Update-MSGraphEnvironment -SchemaVersion beta
+Connect-MSGraph
+ 
+# Obtenha o grupo de AAD especificado.
+$groupName = "Intune - Produção"
+
+ 
+#$Groups = Get-AADGroup | Get-MSGraphAllPages
+$Group = Get-AADGroup -Filter "displayname eq '$GroupName'"
+ 
+#### Config Don't change
+ 
+Write-host "AAD Group Name: $($Group.displayName)" -ForegroundColor Green
+ 
+# Verifique quais aplicativos estão atribuídos ao grupo de AAD.
+$AllAssignedApps = Get-IntuneMobileApp -Filter "isAssigned eq true" -Select id, displayName, lastModifiedDateTime, assignments -Expand assignments | Where-Object {$_.assignments -match $Group.id}
+Write-host "Number of Apps found: $($AllAssignedApps.DisplayName.Count)" -ForegroundColor cyan
+Foreach ($Config in $AllAssignedApps) {
+ 
+Write-host $Config.displayName -ForegroundColor Yellow
+ 
+}
+ 
+ 
+# Verifique quais políticas de conformidade de dispositivos estão atribuídas ao grupo de AAD.
+$AllDeviceCompliance = Get-IntuneDeviceCompliancePolicy -Select id, displayName, lastModifiedDateTime, assignments -Expand assignments | Where-Object {$_.assignments -match $Group.id}
+Write-host "Number of Device Compliance policies found: $($AllDeviceCompliance.DisplayName.Count)" -ForegroundColor cyan
+Foreach ($Config in $AllDeviceCompliance) {
+ 
+Write-host $Config.displayName -ForegroundColor Yellow
+ 
+}
+ 
+ 
+# Verifique quais políticas de configuração de dispositivos estão atribuídas ao grupo de AAD.
+$AllDeviceConfig = Get-IntuneDeviceConfigurationPolicy -Select id, displayName, lastModifiedDateTime, assignments -Expand assignments | Where-Object {$_.assignments -match $Group.id}
+Write-host "Number of Device Configurations found: $($AllDeviceConfig.DisplayName.Count)" -ForegroundColor cyan
+Foreach ($Config in $AllDeviceConfig) {
+ 
+Write-host $Config.displayName -ForegroundColor Yellow
+ 
+}
+ 
+# Verifique quais scripts de PowerShell de configuração de dispositivos estão atribuídos ao grupo de AAD.
+$Resource = "deviceManagement/deviceManagementScripts"
+$graphApiVersion = "Beta"
+$uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)?`$expand=groupAssignments"
+$DMS = Invoke-MSGraphRequest -HttpMethod GET -Url $uri
+$AllDeviceConfigScripts = $DMS.value | Where-Object {$_.groupassignments -match $Group.id}
+Write-host "Number of Device Configurations Powershell Scripts found: $($AllDeviceConfigScripts.DisplayName.Count)" -ForegroundColor cyan
+ 
+Foreach ($Config in $AllDeviceConfigScripts) {
+ 
+Write-host $Config.displayName -ForegroundColor Yellow
+ 
+}
+ 
+ 
+ 
+# Verifique quais modelos administrativos de dispositivos estão atribuídos ao grupo de AAD.
+$Resource = "deviceManagement/groupPolicyConfigurations"
+$graphApiVersion = "Beta"
+$uri = "https://graph.microsoft.com/$graphApiVersion/$($Resource)?`$expand=Assignments"
+$ADMT = Invoke-MSGraphRequest -HttpMethod GET -Url $uri
+$AllADMT = $ADMT.value | Where-Object {$_.assignments -match $Group.id}
+Write-host "Number of Device Administrative Templates found: $($AllADMT.DisplayName.Count)" -ForegroundColor cyan
+Foreach ($Config in $AllADMT) {
+ 
+Write-host $Config.displayName -ForegroundColor Yellow
+
+
+}

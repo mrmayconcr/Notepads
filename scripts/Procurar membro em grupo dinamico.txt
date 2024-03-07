@@ -1,0 +1,14 @@
+$lists = Get-DynamicDistributionGroup -identity ddg_bra_all@embraer.com.br
+
+$emailList = @()
+
+foreach ($list in $lists) {
+    $emails = get-dynamicDistributionGroupMember -Identity $list -ResultSize Unlimited | select primarysmtpaddress | Where-Object {$_.PrimarySmtpAddress -like 'roberto.mike@embraer.com.br'}
+    $emailList += New-Object -TypeName psobject -Property @{
+NomeDoGrupo = $list.DisplayName
+EmailDoGrupo = $list.primarysmtpaddress
+Membros = $emails.WindowsLiveID -join ', '
+}
+}
+#$emailList | Export-Csv .\emailsevedgV3.csv -NoTypeInformation
+$emaillist | format-list -autosize

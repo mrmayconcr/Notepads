@@ -1,0 +1,45 @@
+# Importe o módulo do Exchange Online
+Import-Module ExchangeOnlineManagement
+
+# Conecte-se ao Exchange Online
+Connect-ExchangeOnline -UserPrincipalName SUA_CONTA_DE_ADMINISTRADOR -ShowProgress $true
+
+# Lista dos grupos de distribuição a serem excluídos
+$gruposParaExcluir = @(
+"G_EMBCARREIRAY_PORTUGUES@embraer.com.br","G_EMB-CARREIRA-Y-SOD@embraer.com.br","G_EMB_Carreira_Y_-_USA@embraer.com","G_EMBDiretores-BOT@embraer.com.br","G_EMB_DIRETORES-BRA@embraer.com.br","G_EMBDiretores-BRASIL@embraer.com.br","G_EMBDiretores-EGM@embraer.com.br","G_EMBDiretores-ELE@embraer.com.br","G_EMB_DIRETORES-EMEA@embraer.com.br","G_EMB-DIRETOR-ESC@embraer.com.br","G_EMB_DIRETORES-EUA@embraer.com.br","G_EMB-DIRETORES-EUA@embraer.onmicrosoft.com","G_EMBDiretores-EVO@embraer.com.br","G_EMBDiretores-GPX@embraer.com.br","G_EMBDiretores_INGLES@embraer.com","G_EMBDiretores_INGLES4039@embraer.onmicrosoft.com","G_EMBDiretores_PORTUGUES@embraer.com.br","G_EMBDiretores_PORTUGUES2649@embraer.onmicrosoft.com","G_EMBDiretores-SP@embraer.com.br","G_EMBDiretores-TODOS@embraer.com.br","G_EMBDiretores-TTE@embraer.com.br","G_EMB_Diretores_-_VCP@embraer.com","G_EMB_EVE@embraer.com.br","G_EMB_GERENTES_-_AMS@embraer.com","G_EMBGerentes-BOT@embraer.com.br","G_EMB_GERENTES-BRA@embraer.com.br","G_EMBGerentes-BRASIL@embraer.com.br","G_EMB-GERENTES-EAST@embraer.com.br","G_EMBGerentes-EGM@embraer.com.br","G_EMBGerentes-ELE@embraer.com.br","G_EMB_GERENTES-EMEA@embraer.com.br","G_EMB-GERENTES-ESC@embraer.com.br","G_EMB_GERENTES-EUA@embraer.com.br","G_EMBGerentes-EVO@embraer.com.br","G_EMBGerentes-GPX@embraer.com.br","G_EMBGerentes_INGLES@embraer.com","G_EMBGerentes_INGLES6355@embraer.onmicrosoft.com","G_EMB-GERENTES-PORT@embraer.com.br","G_EMBGerentes_PORTUGUES@embraer.com.br","G_EMBGerentes_PORTUGUES8599@embraer.onmicrosoft.com","G_EMBGerentes-SOD@embraer.com.br","G_EMBGerentes-SOD8734@embraer.onmicrosoft.com","G_EMBGerentes-SP@embraer.com.br","G_EMBGerentes-TODOS@embraer.com.br","G_EMBGerentes-TTE@embraer.com.br","G_EMBSupervisor-BOT@embraer.com.br","G_EMBSupervisor-EGM@embraer.com.br","G_EMBSupervisor-ELE@embraer.com.br","G_EMB-SUPERVISOR-ESC@embraer.com.br","G_EMBSupervisor-EVO@embraer.com.br","G_EMB_Supervisor_-_FLL@embraer.com","G_EMB-SUPERVISOR-FLN@embraer.com.br","G_EMBSupervisor-GPX@embraer.com.br","G_EMBSupervisor_INGLES@embraer.com","G_EMBSupervisor_INGLES2579@embraer.onmicrosoft.com","G_EMB_Supervisor_-_JAX@embraer.com","G_EMB_Supervisor_-_MLB@embraer.com","G_EMBSupervisor_PORTUGUES@embraer.com.br","G_EMBSupervisor_PORTUGUES7764@embraer.onmicrosoft.com","G_EMBSupervisor-PTE@embraer.com.br","G_EMB-SUPERVISOR-SIN@sin.embraer.com","G_EMBSupervisor-SJK@embraer.com.br","G_EMBSupervisor-SOD@embraer.com.br","G_EMBSupervisor-SP@embraer.com.br","G_EMBSupervisor-TODOS@embraer.com.br","G_EMBSupervisor-TTE@embraer.com.br","G_EMB-SUPERVISOR-VCP@embraer.com.br","g_embsupervisores-bot@embraer.com","G_EMB_SUPERVISORES-BRA@embraer.com.br","G_EMBSupervisores-BRASIL@embraer.com.br","G_EMB-SUPERVISORES-EAST@embraer.com.br","g_embsupervisores-egm@embraer.com","G_EMB_SUPERVISORES-EMEA@embraer.com.br","g_embsupervisores-esc@embraer.com","G_EMB_SUPERVISORES-EUA@embraer.com.br","g_embsupervisores-gpx@embraer.com","G_EMB_SUPERVISORES-PORT@embraer.com.br","G_EMB-SUPERVISORES-PRT@embraer.com.br","g_embsupervisores-pte@embraer.com","g_embsupervisores-sod@embraer.com","G_EMB-SUPERVISORES-TITUS@embraer.com.br","g_emb_vice-presidentes@embraer.com.br","G_EMBVice-Presidentes_INGLES@embraer.com.br","G_EMBVice-Presidentes_INGLES3727@embraer.onmicrosoft.com","G_EMB_Vice_Presidentes_POR@embraer.com.br","G_EMBVice-Presidentes-PORTUGUES@embraer.com.br","G_EMB_VICE-PRESIDENTES_ENG@embraer.onmicrosoft.com","G_EMB_EMBRAER_TEMP@embraer.com.br"
+)
+
+# Array para armazenar os resultados (sucesso/falha) para cada grupo
+$resultados = @()
+
+foreach ($grupo in $gruposParaExcluir) {
+    $resultadoGrupo = New-Object PSObject -Property @{
+        Grupo = $grupo
+        Status = $null
+        Mensagem = $null
+    }
+    
+    try {
+        # Exclua o grupo e registre o sucesso
+        Remove-DistributionGroup -Identity $grupo -Confirm:$false
+        $resultadoGrupo.Status = "Sucesso"
+        $resultadoGrupo.Mensagem = "Grupo excluído com sucesso."
+    } catch {
+        # Registre a falha
+        $resultadoGrupo.Status = "Falha"
+        $resultadoGrupo.Mensagem = $_.Exception.Message
+    }
+    
+    # Adicione o resultado ao array de resultados
+    $resultados += $resultadoGrupo
+    
+    # Saída para o console indicando qual grupo está sendo processado
+    Write-Host "Processando grupo: $grupo - Status: $($resultadoGrupo.Status) - Mensagem: $($resultadoGrupo.Mensagem)"
+}
+
+# Desconecte-se do Exchange Online
+Disconnect-ExchangeOnline -Confirm:$false
+
+# Exporte os resultados para um arquivo CSV para referência futura
+$resultados | Export-Csv -Path "Resultados_Exclusao_Grupos.csv" -NoTypeInformation
+

@@ -1,0 +1,1 @@
+$Dados = Get-Mailbox -ResultSize Unlimited | Where-Object {$_.ForwardingSmtpAddress -like "smtp:*"} | Select name, UserPrincipalName, ForwardingSMTPAddress, DeliverToMailboxandforward | Export-CSV ".\EMBRAER-encaminhamentos0403204.csv" -NoTypeInformation

@@ -1,0 +1,3 @@
+$users = alessandra.calijuri@embraer.com.br,paloma.machado@embraer.com.br,vanessa.siqueira@embraer.com.br,patricia.buglio@embraer.com.br
+
+$email = G_EMBSecretarias-GPX@embraer.com.br

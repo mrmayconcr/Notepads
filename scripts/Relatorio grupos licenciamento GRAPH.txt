@@ -1,0 +1,30 @@
+$UsersData = @()
+#$UsersExchange = get-recipient -recipientPreviewFilter "((Department -like '*DPS*') -and (CustomAttribute4 -eq 'Contractor'))" | select DisplayName, isDirSynced, primarysmtpaddress, recipientType, Manager, CustomAttribute1, CustomAttribute2, CustomAttribute3, CustomAttribute4, CustomAttribute5, CustomAttribute6, CustomAttribute7, CustomAttribute8, CustomAttribute9
+ 
+ 
+$UsersExchange | Foreach-Object {
+     $GroupMGgraph = Get-MgUserMemberOf -UserId $_.PrimarySmtpAddress -Property id,displayName | ? {$_.AdditionalProperties.'@odata.type' -eq "#microsoft.graph.group" -and $_.AdditionalProperties.displayName -like 'web-office*'} | select @{n="Grupo displayName";e={$_.AdditionalProperties.displayName}},id
+ 
+ 
+     $UsersData += New-Object -TypeName PSObject -Property @{
+         DisplayName = $_.DisplayName
+         IsDirSynced = $_.IsDirSynced
+         PrimarySmtpAddress = $_.PrimarySmtpAddress
+         RecipientType = $_.RecipientType
+         'Reporta para' = (get-recipient -Identity $_.Manager).WindowsLiveID
+         CustomAttribute1 = $_.CustomAttribute1
+         CustomAttribute2 = $_.CustomAttribute2
+         CustomAttribute3 = $_.CustomAttribute3
+         CustomAttribute4 = $_.CustomAttribute4
+         CustomAttribute5 = $_.CustomAttribute5
+         CustomAttribute6 = $_.CustomAttribute6
+         CustomAttribute7 = $_.CustomAttribute7
+         CustomAttribute8 = $_.CustomAttribute8
+         CustomAttribute9 = $_.CustomAttribute9
+         GrupoDisplayName = $GroupMGgraph.'Grupo displayName' -join "; "
+         GrupoId = $GroupMGgraph.id -join "; "
+ 
+     }
+}
+ 
+$UsersData | Export-Csv .\RelatorioGruposLicenciamento.csv -NoTypeInformation

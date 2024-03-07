@@ -1,0 +1,59 @@
+connect-mggraph -scopes "User.ReadWrite.All,Directory.ReadWrite.All,CustomSecAttributeAssignment.ReadWrite.All,CustomSecAttributeDefinition.ReadWrite.All,Group.ReadWrite.All"
+
+
+$groupAssociations = @{
+    "IT Members - L3"                = "diretos.cio@embraer.com.br"
+    "IT Members - L4 Brazil"         = "til4.brasil@embraer.com.br"
+    "IT Members - L4 External Sites" = "til4.sites@embraer.com.br"
+    "IT Members - Brazil All"        = "ti.brasil@embraer.com.br"
+    "IT members - External Sites All"= "ti.sites@embraer.com.br"
+}
+
+
+# Iterar sobre as associações e atualizar os grupos de distribuição
+foreach ($securityGroup in $groupAssociations.Keys) {
+    $distributionGroup = $groupAssociations[$securityGroup]
+
+    # Obter membros do grupo de segurança
+    $securityGroupId = (Get-MgGroup -Filter "displayName eq '$securityGroup'").Id
+    $securityGroupMembers = Get-MgGroupMember -GroupId $securityGroupId
+    $securityGroupMembers = $securityGroupMembers.Id -join ','
+    $securityGroupMembers = $securityGroupMembers.Split(",")
+
+    # Obter ID do grupo de distribuição
+    $distributionGroupId = (Get-MgGroup -Filter "mail eq '$distributionGroup'").Id
+    
+    #
+    $distributionGroupMembers = (Get-MgGroupMember -GroupId $distributionGroupId).additionalproperties.userPrincipalName
+    #$distributionGroupMembers = $distributionGroupMembers -join ','
+    #$distributionGroupMembers = $distributionGroupMembers.split(",")
+
+    # Remover membros existentes
+    # Remove-MgGroupMemberByRef -GroupId $distributionGroupId -DirectoryObjectId $distributionGroupMembers
+    
+    # Exchange
+    $distributionGroupMembers
+    write-host "Distribuicao: $distributionGroup" -BackgroundColor blue
+    write-host "Segurança: $securityGroup" -BackgroundColor green -NoNewline
+    Update-DistributionGroupMember -Identity $distributionGroup -Members $distributionGroupMembers
+    
+
+    # IF
+    if ($distributionGroup -eq "diretos.cio@embraer.com.br")
+    {
+		write-host "Adicionando apfsousa e daniel.val na Diretos do Cio"
+		add-distributiongroupmember -identity $distributionGroup -member apfsousa@embraer.com.br
+		add-distributiongroupmember -identity $distributionGroup -member daniel.val@embraer.com.br
+	}
+	if ($distributionGroup -eq "til4.brasil@embraer.com.br")
+	{
+		write-host "Removendo daniel.val do TI L4 brasil"
+		remove-distributiongroupmember -identity $distributionGroup -member daniel.val@embraer.com.br
+	}
+
+    # Atualizar membros
+    # Update-MgGroup -GroupId $distributionGroupId -Members $securityGroupMembers
+
+    # Adicionar membros do grupo de segurança ao grupo de distribuição
+    # $securityGroupMembers | ForEach-Object {new-MgGroupMember -GroupId $distributionGroupId -DirectoryObjectId $_}
+}

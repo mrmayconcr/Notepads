@@ -1,0 +1,53 @@
+$GroupData = @()
+$Groups = Get-UnifiedGroup -ResultSize 50 -SortBy Name
+$Groups | Foreach-Object {
+	$GroupOwners = Get-UnifiedGroupLinks -LinkType Owners -Identity $_.Id | Select DisplayName, PrimarySmtpAddress
+	$GroupData += New-Object -TypeName PSObject -Property @{
+		GroupName = $_.Alias
+		GroupEmail = $_.PrimarySmtpAddress
+		OwnerName = $GroupOwners.DisplayName -join "; "
+		OwnerIDs = $GroupOwners.PrimarySmtpAddress -join "; "
+		Members = Get-UnifiedGroupLinks -LinkType Member | Select DisplayName,PrimarySmtpAddress
+		
+	}
+}
+$GroupData
+$GroupData | Export-Csv .\export16.csv -NoTypeInformation
+
+
+Members = Get-DistributionGroupMember -Identity $_.PrimarySmtpAddress
+
+Members = Get-UnifiedGroupLinks -LinkType Members -Identity $_.PrimarySmtpAddress
+		Members = $._EmailAddress -join "; "
+
+Get-UnifiedGroupLinks -LinkType Member | Select DisplayName,PrimarySmtpAddress
+
+--------------------------------========================-----------------
+
+$GroupData = @()
+$Groups = Get-UnifiedGroup -ResultSize Unlimited -SortBy Name
+$Groups | Foreach-Object {
+	$GroupOwners = Get-UnifiedGroupLinks -LinkType Owners -Identity $_.Id | Select DisplayName, PrimarySmtpAddress
+	$GroupEmails = $Groups.PrimarySmtpAddress
+	$GroupMembers = Get-UnifiedGroupLinks -LinkType Member -Identity $_.Id | Select DisplayName,PrimarySmtpAddress
+	$GroupData += New-Object -TypeName PSObject -Property @{
+		GroupName = $_.Alias
+		GroupDisplayname = $_.DisplayName
+		GroupEmail = $_.PrimarySmtpAddress
+		OwnerName = $GroupOwners.DisplayName -join "; "
+		OwnerIDs = $GroupOwners.PrimarySmtpAddress -join "; "
+		MembersName = $GroupMembers.DisplayName -join "; "
+		MembersID = $GroupMembers.PrimarySmtpAddress -join "; "
+		
+	}
+}
+
+$GroupData | Export-Csv c:\temp\ReportEve04032024.csv -NoTypeInformation
+
+
+Members = Get-DistributionGroupMember -Identity $_.PrimarySmtpAddress
+
+Members = Get-UnifiedGroupLinks -LinkType Members -Identity $_.PrimarySmtpAddress
+		Members = $._EmailAddress -join "; "
+
+Get-UnifiedGroupLinks -LinkType Member | Select DisplayName,PrimarySmtpAddress

@@ -1,0 +1,38 @@
+# Importar o módulo MicrosoftTeams
+Import-Module MicrosoftTeams
+
+# Conectar no Teams
+Connect-MicrosoftTeams
+
+# Lista vazia
+$report = @()
+
+# Info
+$teams = Get-Team
+
+# Loop em cada time pra pegar as respectivas info
+foreach ($team in $teams) {
+    $displayName = $team.DisplayName
+    $visibility = $team.Visibility
+    $owners = Get-TeamUser -GroupId $team.GroupId -Role Owner | Select-Object -ExpandProperty User
+    $ownersJoined = $owners -join ', '
+	$members = Get-TeamUser -GroupId $team.GroupId -Role Member | Select-Object -ExpandProperty User
+	$membersJoined = $members -join ', '
+
+    $teamInfo = New-Object PSObject -Property @{
+    # Criar um objeto personalizado com as informações do time
+        DisplayName = $displayName
+        Visibility = $visibility
+        Owners = $ownersJoined
+		Members = $membersJoined
+    }
+
+    # Adicionar o objeto à lista de resultados
+    $report += $teamInfo
+}
+
+# Gerar um arquivo CSV com os resultados
+$report | Export-Csv -Path ".\ArquivoTEAMS12823.csv" -NoTypeInformation
+
+# Exibir mensagem de conclusão
+Write-Host "Relatório gerado com sucesso!"

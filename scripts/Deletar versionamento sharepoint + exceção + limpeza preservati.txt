@@ -1,0 +1,104 @@
+#Parametros Globais
+$SiteURL = "https://embraer.sharepoint.com/sites/SwedenC390CaptureTeam"
+$AdminEmail = "maycon.rocha365@globmail.com.br"
+$VersionsToKeep = 3
+ 
+#Adicionar bloco para oferecer expansão do armazenamento)
+#(Aqui escrever o bloco para perguntar na console se desejar expandir e em quanto deseja)
+ 
+#Parametro Politica de Retenção
+$PolicyName = "20 years policy"
+#Iniciar adição de exceção
+ 
+Try {
+	Connect-ExchangeOnline
+    Connect-IPPSSession
+    $Policy = Get-RetentionCompliancePolicy -Identity $PolicyName
+    If($Policy)
+    {
+        #ADD EXCEÇÃO
+        Set-RetentionCompliancePolicy -AddSharePointLocationException $SiteURL -Identity $Policy.Name
+    }
+}
+Catch {
+    write-host "Error: $($_.Exception.Message)" -foregroundcolor Red
+}
+ 
+ 
+#Iniciar limpeza de versões 
+#Config Variables
+ 
+$ListName = "documentos"
+ 
+#Connect to PnP Online
+Connect-PnPOnline -Url $SiteURL -Interactive
+
+#Adicionar quem ta rodando como owner
+ 
+set-pnptenantsite -Identity $SiteURL -Owners $AdminEmail
+
+#Get the Context
+$Ctx= Get-PnPContext
+ 
+#Get All Items from the List - Exclude 'Folder' List Items
+$ListItems = Get-PnPListItem -List $ListName -Query "<View Scope='RecursiveAll'><Query><Where><Eq><FieldRef Name='FSObjType'/><Value Type='Integer'>0</Value></Eq></Where></Query></View>"
+ 
+ForEach ($Item in $ListItems)
+{
+    #Get File Versions
+    $File = $Item.File
+    $Versions = $File.Versions
+    $Ctx.Load($File)
+    $Ctx.Load($Versions)
+    $Ctx.ExecuteQuery()
+ 
+    Write-host -f Yellow "Scanning File:"$File.Name
+    $VersionsCount = $Versions.Count
+    $VersionsToDelete = $VersionsCount - $VersionsToKeep
+    If($VersionsToDelete -gt 0)
+    {
+        write-host -f Cyan "`t Total Number of Versions of the File:" $VersionsCount
+        #Delete versions
+        For($i=0; $i -lt $VersionsToDelete; $i++)
+        {
+            write-host -f Cyan "`t Deleting Version:" $Versions[0].VersionLabel
+            $Versions[0].DeleteObject()
+        }
+        $Ctx.ExecuteQuery()
+        Write-Host -f Green "`t Version History is cleaned for the File:"$File.Name
+    }
+}
+ 
+#Iniciando Limpeza da biblioteca de preservação (DELETA PERMANENTE, PRA DELETAR PRA LIXEIRA ADD PARAMETRO -RECYCLE NA LINHA 92)
+ 
+$LibraryName ="PreservationHoldLibrary"
+#Connect to PnP Online
+#Connect-PnPOnline -Url $SiteURL -Interactive
+#Get the Library
+$Library = Get-PnPList -Identity $LibraryName
+       
+#Check if document Library exist
+If($Library -ne $Null)
+{
+    #Set Allow Deletion Property to True
+    $Library.AllowDeletion = $True
+    $Library.Update()
+    Invoke-PnPQuery
+    #powershell to remove document library
+    Remove-PnPList -Identity $LibraryName -Force
+    Write-host -f Green "Preservation Hold Library Deleted Successfully!"
+}
+Else
+{
+    Write-host -f Yellow "Could not find Preservation Hold Library!"
+}
+ 
+#Sugestão da Natasha
+#(Adicionar bloco para limpeza de lixeira)
+ 
+ 
+#Removendo admin pra encerrar codigo
+Remove-PnPSiteCollectionAdmin -Owners $AdminEmail
+ 
+#Adiciona novamente na politica de retenção
+Set-RetentionCompliancePolicy -RemoveSharepointLocationException $SiteURL -Identity $Policy.Name

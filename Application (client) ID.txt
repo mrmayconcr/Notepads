@@ -1,0 +1,17 @@
+Application (client) ID
+5529a80d-6fa6-4386-a29f-37ea74d0c70a
+
+Object ID
+b1738868-ff11-416b-9922-b4bc71ce28af
+
+Directory (tenant) ID
+1b5ba8a2-315d-45ce-959a-42b748c01de7
+
+
+
+EMEA HELPDESK 3 - secret
+
+Value - ugm8Q~T_CH19hfiGaTMBwPyPpvYJqJr7GQbYVbEg
+Secret ID - f0bde9e1-8e7e-4a5a-afe1-48490fb9512d
+
+

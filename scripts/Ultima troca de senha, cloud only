@@ -1,0 +1,29 @@
+# Conectando ao Azure AD
+Connect-AzureAD
+
+# Obtendo usuários cloud-only (com "dir sync enabled" diferente de TRUE)
+$cloudUsers = Get-msoluser -All:$True | Where-Object { $_.DirSyncEnabled -ne $true }
+
+# Loop através dos usuários cloud-only para obter a última data de troca de senha
+$report = @()
+
+foreach ($user in $cloudUsers) {
+    $userDisplayName = $user.DisplayName
+    $userPrincipalName = $user.UserPrincipalName
+    $lastPasswordChange = $user.LastPasswordChangeTimestamp
+	$PasswordExpiration = $user.PasswordNeverExpires
+    $userData = [PSCustomObject]@{
+        DisplayName = $userDisplayName
+        Email = $userPrincipalName
+        Ultima Troca de Senha = $lastPasswordChange
+		Senha expira? = $PasswordExpiration
+    }
+
+    $report += $userData
+}
+
+# Exibindo os resultados
+$report | Format-Table -AutoSize
+
+# Desconectando do Azure AD
+Disconnect-AzureAD

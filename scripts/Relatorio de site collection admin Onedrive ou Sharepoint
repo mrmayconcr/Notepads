@@ -1,0 +1,109 @@
+$username = "maycon.rocha365@globmail.com.br"
+$Sites = Get-SPOSite -IncludePersonalSite $true -Limit all -Filter "Url -like 'embraer-my.sharepoint.com/personal/'"
+$i = 0
+
+$AdminObjects = @()
+
+foreach ($Site in $Sites) {
+    $URL = $Site.URL
+    $i++
+    try {
+            $Admins = Get-SPOUser -Site $URL -Limit all | Where-Object { $_.IsSiteAdmin -eq $true } | Select-Object url, displayname, loginName
+        }
+  
+    catch 
+        {
+			write-host "Usuario $($site.title)" -foregroundcolor blue
+            try {
+					Set-SPOUser -Site $URL -LoginName $username -IsSiteCollectionAdmin $true -errorAction Stop | Out-Null
+					Write-Host "Adicionando permissões de administrador" -foregroundcolor Green
+				} catch {
+					Write-Host "Erro ao adicionar permissões de administrador: $" -backgroundcolor Red
+				}
+            $Admins = Get-SPOUser -Site $URL -Limit all | Where {$_.IsSiteAdmin -eq $True -and $_.LoginName -ne $username} | Select url, displayname, loginName
+            try {
+					Set-SPOUser -Site $URL -LoginName $username -IsSiteCollectionAdmin $false -errorAction Stop| Out-Null
+					Write-Host "Removendo permissões de administrador" -foregroundcolor yellow
+				} catch {
+					Write-Host "Erro ao remover permissões de administrador: $" -backgroundcolor red
+				}
+			
+            Write-Host "Contagem: $i de $($Sites.count)"
+        }
+        
+$AdminObject = [PSCustomObject]@{
+    "Usuario"               = $Site.Title
+    "Email do Usuario"       = $Site.owner
+    "URL"                 = $URL
+    "Administradores"     = ($admins | Select-Object -ExpandProperty displayname) -join ","
+    "Email dos Admins"    = ($admins | Select-Object -ExpandProperty loginName) -join ","
+    
+}
+
+$AdminObjects += $AdminObject
+    
+}
+
+$AdminObjects | Export-Csv -Path "c:\temp\RelatorioEmbraerOnedriveAdmins.csv" -NoTypeInformation -Encoding ASCII -Append -force
+
+
+
+
+
+
+
+
+$username = "maycon.rocha365@globmail.com.br"
+$Sites = Get-SPOSite -IncludePersonalSite $true -Limit 5 -Filter "Url -like 'embraer-my.sharepoint.com/personal/'"
+foreach ($Site in $sites) 
+	{
+
+	$URL = $Site.URL
+	$Admins = Get-SPOUser -Site $URL -Limit all | Where IsSiteAdmin -eq $True | Select url, displayname, loginName
+	
+	if ($Admins) 
+		{
+		$Admins | export-csv c:\temp\OneDriveAdmins.csv -NoTypeInformation -append -encoding ASCII
+		} else {
+		Set-SPOUser -Site $URL -LoginName $username -IsSiteCollectionAdmin $true
+		Get-SPOUser -Site $URL -Limit all | Where {$_.IsSiteAdmin -eq $True -and $_.LoginName -ne $username} | Select url, displayname, loginName
+		Set-SPOUser -Site $URL -LoginName $username -IsSiteCollectionAdmin $false
+		}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$username = "$env:username@domain.com"
+$Sites = Get-SPOSite -IncludePersonalSite $true -Limit all -Filter "Url -like 'domain-my.sharepoint.com/personal/'"
+foreach ($Site in $sites) {
+	$URL = $Site.URL
+	$Admins = Get-SPOUser -Site $URL -Limit all | Where IsSiteAdmin -eq $True | Select-Object @{Label="Site";Expression={"$URL"}},@{Label="AdminName";Expression={$_.DisplayName}}, @{Label="AdminLogin";Expression={$_.LoginName}}, @{Label="RemoveNonOwnerAdmin";Expression={If ($URL.replace("https://domain-my.sharepoint.com/personal/","") -ne $_.LoginName.replace("@","_").replace(".","_")) {"Set-SPOUser -Site $URL -LoginName $($_.LoginName) -IsSiteCollectionAdmin `$False"} else {""}}}
+	if ($Admins) {
+		$Admins | export-csv c:\temp\OneDriveAdmins.csv -NoTypeInformation -append -encoding ASCII
+		} else {
+		Set-SPOUser -Site $URL -LoginName $username -IsSiteCollectionAdmin $true
+		Get-SPOUser -Site $URL -Limit all | Where {$_.IsSiteAdmin -eq $True -and $_.LoginName -ne $username} | Select-Object @{Label="Site";Expression={"$URL"}},@{Label="AdminName";Expression={$_.DisplayName}}, @{Label="AdminLogin";Expression={$_.LoginName}}, @{Label="RemoveNonOwnerAdmin";Expression={If ($URL.replace("https://domain-my.sharepoint.com/personal/","") -ne $_.LoginName.replace("@","_").replace(".","_")) {"Set-SPOUser -Site $URL -LoginName $($_.LoginName) -IsSiteCollectionAdmin `$False"} else {""}}} | export-csv c:\temp\OneDriveAdmins.csv -NoTypeInformation -append -encoding ASCII
+		Set-SPOUser -Site $URL -LoginName $username -IsSiteCollectionAdmin $false
+		}
+}

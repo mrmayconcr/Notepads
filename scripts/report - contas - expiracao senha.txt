@@ -1,0 +1,19 @@
+$UsersData = @()
+$Users = Get-mailbox -ResultSize Unlimited -SortBy Name | select ExternalDirectoryObjectID, RecipientTypeDetails
+$Users | Foreach-Object {
+	$UsersAzureAD = get-azureaduser -objectID $_.ExternalDirectoryObjectID | select passwordpolicies, displayname, userprincipalname, DirSyncEnabled
+	#$UsersExchange = get-mailbox -identity $_.ExternalDirectoryObjectID | select RecipientTypeDetails
+	
+	$UsersData += New-Object -TypeName PSObject -Property @{
+		UserName = $_.DisplayName
+		UPN = $_.PrimarySMTPAddress
+		Policies = $UsersAzureAD.Passwordpolicies
+		TipoDeUsuario = $_.RecipientTypeDetails
+		Sincronizado = $UsersAzureAD.DirSyncEnabled		
+	}
+}
+
+$UsersData | Export-Csv .\SenhaExpirationCLOUDONLYRECIPIENTTYPE.csv -NoTypeInformation
+
+
+get-azureadUser -all:$True | where {$_.DirSyncEnabled -ne $True} | select displayname, userprincipalname, PasswordPolicies | Out-GridView

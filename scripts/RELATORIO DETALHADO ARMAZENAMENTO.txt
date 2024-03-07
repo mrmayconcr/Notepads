@@ -1,0 +1,95 @@
+#Get Size of all lists and libraries in a SharePoint Site
+ 
+Add-PSSnapin microsoft.sharepoint.powershell -ErrorAction SilentlyContinue
+  
+#Function to Get Storage Metrics for a list/library 
+Function GetStorageMetrics($Folder)
+{   
+    $TotalSize=0 
+    #Get the size of each file in the folder
+    foreach ($File in $Folder.Files)
+    {
+        #Get File Size
+        $FileSize = $File.TotalLength
+         
+        $VersionSize=0
+        #Get the Versions Size
+        foreach ($FileVersion in $File.Versions)
+        {
+            $VersionSize += $FileVersion.Size
+        }
+        $TotalSize += $VersionSize+ $FileSize 
+    }
+     
+ 
+      #Get Files in Sub Folders
+      foreach ($SubFolder in $Folder.SubFolders)
+      {   
+         if($SubFolder.Name -ne "Forms") #Leave "Forms" Folder which has List default Aspx Pages.
+             {
+                #Call the function recursively for the subfolders
+                $TotalSize += GetStorageMetrics($SubFolder)          
+             }
+        } 
+         
+        #Return the object
+     return $TotalSize
+}
+ 
+#Set Site URL  variable
+$WebURL = "https://sharepoint.crescent.com"
+#Get the Web
+$Web = Get-SPWeb $WebURL
+ 
+#Array to hold Storage data for all lists and libraries
+$StorageDataCollection = @() 
+ 
+foreach($List in $Web.Lists)
+ {
+    #Leave the Hidden Lists and exclude certain Libraries
+    if($List.Hidden -eq $false)
+    {
+        #Write-host "Procesing list:" $list.title
+        #Call the function to get library's Size relatedMetrics
+        $LibrarySize = GetStorageMetrics($List.RootFolder)
+         
+        #Create an object to hold storage data
+        $StorageDataResult = New-Object PSObject
+         
+        #Add other details of the list 
+        $StorageDataResult | Add-Member -type NoteProperty -name "List/Library Name" -value $List.Title
+        $StorageDataResult | Add-Member -type NoteProperty -name "Item/File Count" -value $List.ItemCount
+        $StorageDataResult | Add-Member -type NoteProperty -name "Created by" -value $List.Author
+        $StorageDataResult | Add-Member -type NoteProperty -name "Created on" -value $List.Created
+        $StorageDataResult | Add-Member -type NoteProperty -name "Last Modified" -value $List.LastItemModifiedDate
+        $StorageDataResult | Add-Member -type NoteProperty -name "URL" -value $List.DefaultViewUrl
+         
+        #Add storage related Data
+        $StorageDataResult | Add-Member -type NoteProperty -name "Total Size (KB)" -value ([Math]::Round(($LibrarySize/1KB),2))
+ 
+        #Add object to an array
+        $StorageDataCollection += $StorageDataResult       
+    }
+ }
+ 
+#Get Recycle bin size
+$RecyclebinSize=0
+foreach($RecycleBinItem in $Web.RecycleBin)
+        {
+           $RecyclebinSize += $RecycleBinItem.Size
+        }
+#Get the Total size of the library
+$TotalSiteSize = ($StorageDataCollection | Measure-Object 'Total Size (KB)' -Sum | Select -expand Sum)
+ 
+ 
+Write-host "Total Lists/Libraries Size in MB: "([Math]::Round(($TotalSiteSize/1KB),2))
+write-host "Recycle bin Size in MB:" ([Math]::Round(($RecyclebinSize/1MB),2))
+#Add recycle bin size
+Write-host "Total site Size in MB: "([Math]::Round(($TotalSiteSize/1KB)+($RecyclebinSize/1MB),2))
+write-host "Total Number of Lists/Libraries in the Site:" $Web.Lists.Count 
+ 
+#export the detailed storage Info the CSV file
+$StorageDataCollection | sort-object "Total Size" -descending | Export-csv "SiteStroageRpt.csv" -notypeinformation
+Write-host "Site Storage Report has been generated!"
+       
+$Web.dispose()

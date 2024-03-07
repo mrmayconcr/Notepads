@@ -1,0 +1,184 @@
+
+#Parte para abrir a janela de dialogo para escolher o arquivo
+[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
+$OpenFIleDialog = New-Object System.Windows.Forms.OpenFileDialog
+$OpenFileDialog.InitialDirectory = $InitialDirectory
+$OpenFileDialog.Filter = "CSV (*.csv) | *.csv"
+$OpenFileDialog.ShowDialog() | Out-Null
+
+#Separação das variaveis para trabalhar nelas posteriormente
+$Path = $OpenFileDialog.Filename
+$NomeDoArquivo = [System.IO.Path]::GetFileNameWithoutExtension($Path)
+$Users = (Import-Csv -Path $Path)."E-mail"
+$UserParaZerarGrupo = "maycon.rocha365@globmail.com.br
+
+#Amostragem de usuarios e grupo escolhi
+$Users
+$NomeDoArquivo
+
+#Sessão para confirmar o grupo e utilizar o objeto dele, invés do nome que pode causar erro se houver duplicidade.
+#$Idgrupo=get-distributiongroup -ResultSize unlimited | where {$_.displayname -eq "$nomedoarquivo”} | select DisplayName, primarysmtpaddress
+#$nomedoarquivo=$Idgrupo.PrimarySmtpAddress
+
+#Parte para atualizar o grupo com somente 1 membro e depois removendo o membro usado para zerar o grupo.
+Update-distributionGroupMember -identity $NomeDoArquivo -Member $UserParaZerarGrupo -Confirm:$false
+Remove-distributionGroupMember -identity $NomeDoArquivo -Member $UserParaZerarGrupo -Confirm:$false
+
+Bloco de adição de usuarios 1 a 1 e captura dos erros e respectivos emails.
+Try {
+$Users | foreach{Add-DistributionGroupMember -Identity $NomeDoArquivo -Member $_}
+}
+Catch {
+write-host -f Red "Error:" $Users
+
+
+====================================================================================
+$lista = "alexfigy@embraer.com.br","cristian.carlevaro@embraer.com","cbarbosa@embraer.com.br","daniel.moczydlower@embraer.com.br","eduardo.fusaro@embraer.com.br","fernando.oliveira@embraer.com.br","jacalves@embraer.com.br","jose.agostini@embraer.com.br","luciano.castro@embraer.com.br","marcello.mota@embraer.com.br","marcelo.santiago@embraer.com.br","marcia.sato@embraer.com.br","malmeida@embraer.com.br","rodrigo.azevedo@embraer.com.br","rsouza@embraer.com.br","sergiocunha@embraer.com.br","vivian.araujo@embraer.com.br"
+
+$usuariosValidos = foreach ($usuario in $lista) {
+    try {
+        Get-Mailbox -Identity $usuario -ErrorAction Stop
+        $usuario
+    } catch {}
+}
+
+$grupo = "G_EMB DIRETORES - SJK"
+
+try {
+	update-distributionGroupMember -identity $grupo -Member $usuariosValidos -Confirm:$false -ErrorAction Continue
+	
+	}
+catch {}
+
+==========================================
+
+$lista = "alexfigy@embraer.com.br","cristian.carlevaro@embraer.com","cbarbosa@embraer.com.br","daniel.moczydlower@embraer.com.br","eduardo.fusaro@embraer.com.br","fernando.oliveira@embraer.com.br","jacalves@embraer.com.br","jose.agostini@embraer.com.br","luciano.castro@embraer.com.br","marcello.mota@embraer.com.br","marcelo.santiago@embraer.com.br","marcia.sato@embraer.com.br","malmeida@embraer.com.br","rodrigo.azevedo@embraer.com.br","rsouza@embraer.com.br","sergiocunha@embraer.com.br","vivian.araujo@embraer.com.br"
+
+$grupo = "G_EMB DIRETORES - SJK"
+
+# Verifica se os usuários da lista são válidos
+$usuariosValidos = foreach ($usuario in $lista) {
+    try {
+        Get-Mailbox -Identity $usuario -ErrorAction Stop
+        $usuario
+    } catch {}
+}
+
+# Obtém os membros atuais do grupo
+$membrosAtuais = Get-DistributionGroupMember -Identity $grupo | Select-Object -ExpandProperty PrimarySmtpAddress
+
+# Remove os membros que não estão na lista de usuários válidos
+$membrosAtuais | Where-Object { $_ -notin $usuariosValidos } | ForEach-Object {
+    Remove-DistributionGroupMember -Identity $grupo -Member $_ -Confirm:$false
+}
+
+# Adiciona os usuários válidos que ainda não são membros do grupo
+$usuariosValidos | Where-Object { $_ -notin $membrosAtuais } | ForEach-Object {
+    Add-DistributionGroupMember -Identity $grupo -Member $_
+}
+
+
+======================================= LAB ABAIXO ============
+
+Try {
+    # Connect to Exchange Online
+    Connect-ExchangeOnline -ShowBanner:$False
+
+    # Get Data from CSV and Update Distribution Groups
+    Import-CSV $CSVFilePath | ForEach {
+        $groupEmail = $_.Email
+        $groupMembers = $_.Membros -split ","
+
+        # Get the distribution group
+        $distributionGroup = Get-DistributionGroup -Filter "PrimarySmtpAddress -eq '$groupEmail'" -ErrorAction SilentlyContinue
+Try {
+    # Connect to Exchange Online
+    Connect-ExchangeOnline -ShowBanner:$False
+
+    # Get Data from CSV and Update Distribution Groups
+    Import-CSV $CSVFilePath | ForEach {
+        $groupEmail = $_.Email
+        $groupMembers = $_.Membros -split ","
+
+        # Get the distribution group
+        $distributionGroup = Get-DistributionGroup -Filter "PrimarySmtpAddress -eq '$groupEmail'" -ErrorAction SilentlyContinue
+
+        if ($distributionGroup) {
+            # Update existing group
+            Set-DistributionGroup -Identity $distributionGroup.Identity -Members $groupMembers -BypassSecurityGroupManagerCheck
+            Write-Host -ForegroundColor Green "Updated Distribution Group: $($distributionGroup.Name)"
+        }
+        else {
+            Write-Host -ForegroundColor Red "Distribution Group not found for Email: $groupEmail"
+        }
+    }
+
+    # Verifica se os usuários da lista são válidos
+    $usuariosValidos = foreach ($usuario in $lista) {
+        if (Test-ExchangeEmailAddress -EmailAddress $usuario) {
+            $usuario
+        }
+    }
+
+    # Loop through the distribution groups to add/remove members
+    foreach ($grupo in $grupos) {
+        $groupName = $grupo.Name
+        $groupEmail = $grupo.Email
+
+        # Obtém os membros atuais do grupo
+        $membrosAtuais = Get-DistributionGroupMember -Identity $groupEmail | Select-Object -ExpandProperty PrimarySmtpAddress
+
+        # Remove os membros que não estão na lista de usuários válidos
+        $removerMembros = $membrosAtuais | Where-Object { $_ -notin $usuariosValidos }
+        if ($removerMembros) {
+            Remove-DistributionGroupMember -Identity $groupEmail -Member $removerMembros -Confirm:$false
+        }
+
+        # Adiciona os usuários válidos que ainda não são membros do grupo
+        $adicionarMembros = $usuariosValidos | Where-Object { $_ -notin $membrosAtuais }
+        if ($adicionarMembros) {
+            Add-DistributionGroupMember -Identity $groupEmail -Member $adicionarMembros
+        }
+    }
+}
+Catch {
+    Write-Host -ForegroundColor Red "Error: $($_.Exception.Message)"
+}
+
+        }
+        else {
+            Write-Host -ForegroundColor Red "Distribution Group not found for Email: $groupEmail"
+        }
+    }
+
+    # Verifica se os usuários da lista são válidos
+    $usuariosValidos = foreach ($usuario in $lista) {
+        if (Test-ExchangeEmailAddress -EmailAddress $usuario) {
+            $usuario
+        }
+    }
+
+    # Loop through the distribution groups to add/remove members
+    foreach ($grupo in $grupos) {
+        $groupName = $grupo.Name
+        $groupEmail = $grupo.Email
+
+        # Obtém os membros atuais do grupo
+        $membrosAtuais = Get-DistributionGroupMember -Identity $groupEmail | Select-Object -ExpandProperty PrimarySmtpAddress
+
+        # Remove os membros que não estão na lista de usuários válidos
+        $removerMembros = $membrosAtuais | Where-Object { $_ -notin $usuariosValidos }
+        if ($removerMembros) {
+            Remove-DistributionGroupMember -Identity $groupEmail -Member $removerMembros -Confirm:$false
+        }
+
+        # Adiciona os usuários válidos que ainda não são membros do grupo
+        $adicionarMembros = $usuariosValidos | Where-Object { $_ -notin $membrosAtuais }
+        if ($adicionarMembros) {
+            Add-DistributionGroupMember -Identity $groupEmail -Member $adicionarMembros
+        }
+    }
+}
+Catch {
+    Write-Host -ForegroundColor Red "Error: $($_.Exception.Message)"
+}

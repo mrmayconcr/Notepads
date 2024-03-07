@@ -1,0 +1,67 @@
+##Create Custom Folder for Exchange Online Mailboxes using Graph API
+
+$Mailboxes = @("luciano.santos@embraer.com.br","danilosantos@embraer.com.br", "maycon.rocha365@globmail.com.br")
+$Folders = @("Untrusted Senders")
+$AppId = '27beadc0-5ca8-47ee-84e9-f5a7af4994dd'
+$AppSecret = 'oTN8Q~T_geaQXPXzYSMr1omMVqZOYskt7P8m5b.S'
+$Scope = "https://graph.microsoft.com/.default"
+$TenantName = "embraer.onmicrosoft.com"
+$Url = "https://login.microsoftonline.com/$TenantName/oauth2/v2.0/token"
+# Add System.Web for urlencode
+Add-Type -AssemblyName System.Web
+# Create body
+$Body = @{
+    client_id = $AppId
+    client_secret = $AppSecret
+    scope = $Scope
+    grant_type = 'client_credentials'
+}
+# Splat the parameters for Invoke-Restmethod for cleaner code
+$PostSplat = @{
+    ContentType = 'application/x-www-form-urlencoded'
+    Method = 'POST'
+    # Create string by joining bodylist with '&'
+    Body = $Body
+    Uri = $Url
+}
+# Request the token!
+$Request = Invoke-RestMethod @PostSplat
+# Create header
+$Header = @{
+    Authorization = "$($Request.token_type) $($Request.access_token)"
+}
+## Access Mailboxes
+
+foreach($mailbox in $Mailboxes) {
+    $Uri = "https://graph.microsoft.com/v1.0/users/$mailbox/mailFolders"
+#Comment the above line and use the following line, in case your requirement is to create folder inside 'Inbox' of your mailbox
+#$Uri = "https://graph.microsoft.com/v1.0/users/$mailbox/mailFolders/Inbox/ChildFolders"
+    ## Fetch Folder Names
+    $Mailboxfolders = Invoke-RestMethod -Uri $Uri -Headers $Header -Method Get -ContentType "application/json"
+    $MailboxfoldersList = $Mailboxfolders.Value.Displayname
+    $NextPage = $Mailboxfolders.'@Odata.NextLink'
+   
+    While($NextPage -ne $Null) {
+        $Mailboxfolders = Invoke-RestMethod -Uri $NextPage -Headers $Header -Method Get -ContentType "application/json"
+        $MailboxfoldersList += $Mailboxfolders.Value.Displayname
+        $NextPage = $Mailboxfolders.'@Odata.NextLink'
+    }
+
+## Loop folders
+    foreach($Folder in $Folders) {
+$Body = @"
+{
+"displayName": "$Folder"
+}
+"@
+        ## Show Progress
+        Write-Host "Checking the folder with similar name..."
+        if($($MailboxfoldersList) -contains $folder) {
+            write-host "$folder already exists. Unable to create the folder in user $mailbox..."
+        }
+        else {
+            $Newfolder = Invoke-RestMethod -Uri $Uri -Headers $Header -Method Post -Body $Body -ContentType "application/json"
+            write-host "Created Folder: $($Newfolder.displayName) in mailbox $mailbox...`n"
+        }
+    }
+}

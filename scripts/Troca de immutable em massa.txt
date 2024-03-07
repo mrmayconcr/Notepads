@@ -1,0 +1,55 @@
+# Install Azure AD module if not already installed
+if (-not (Get-Module -Name AzureAD -ListAvailable)) {
+    Install-Module -Name AzureAD
+}
+
+# Import the Azure AD module
+Import-Module AzureAD
+
+# Set the credentials and the tenant ID
+$tenantId = "your_tenant_id"
+$credential = Get-Credential
+
+# Connect to Azure AD
+Connect-AzureAD -Credential $credential -TenantId $tenantId
+
+# Initialize an array to store the data
+$results = @()
+
+# Function to update immutable ID and log the changes
+function Update-ImmutableID {
+    param (
+        [string]$upn,
+        [string]$objectId
+    )
+
+    $user = Get-AzureADUser -ObjectID $objectId
+    $oldImmutableID = $user.ImmutableId
+    $newImmutableID = "A$oldImmutableID"
+
+    # Update the immutable ID
+    $user | Set-AzureADUser -ImmutableId $newImmutableID
+
+    # Log the changes
+    $results += [PSCustomObject]@{
+        "UPN" = $upn
+        "Old_Immutable_ID" = $oldImmutableID
+        "New_Immutable_ID" = $newImmutableID
+        "Object_ID" = $objectId
+    }
+}
+
+# List of accounts
+$accounts = @(
+    "warehouse.singapore@sin.embraer.com",
+    "vmo.servicessupport@embraer.com.br",
+)
+
+# Loop through the accounts and update the immutable ID
+foreach ($account in $accounts) {
+    $user = Get-AzureADUser -Filter "UserPrincipalName eq '$account'"
+    Update-ImmutableID -upn $account -objectId $user.ObjectId
+}
+
+# Export the results to a CSV file
+$results | Export-Csv -Path ".\File.csv" -NoTypeInformation

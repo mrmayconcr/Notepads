@@ -1,0 +1,19 @@
+$alias = "G_JAX_EDSI_Logistics@globmail.com.br","G_JAX_EDSI_Logistics@embraerexecutivejets.com","G_JAX_EDSI_Logistics@press.embraer.com.br","G_JAX_EDSI_Logistics@pt.embraer.com","EDSI.Logistics@embraer.com.br","G_JAX_EDSI_Logistics@aerochain.com","G_JAX_EDSI_Logistics@pbi.embraer.com","G_JAX_EDSI_Logistics@ie.embraer.com","G_JAX_EDSI_Logistics@embraer.onmicrosoft.com","G_JAX_EDSI_Logistics@embraerfoundation.org","G_JAX_EDSI_Logistics@nl.embraer.com","G_JAX_EDSI_Logistics@terceiros.embraer.com.br","EDSI.Logistics@embraer.onmicrosoft.com","G_JAX_EDSI_Logistics@embraerinservice.com","G_JAX_EDSI_Logistics@sin.embraer.com","G_JAX_EDSI_Logistics@eccleasing.com","G_JAX_EDSI_Logistics@embraer.fr","G_JAX_EDSI_Logistics@embraerprev.com.br","G_JAX_EDSI_Logistics@institutoembraer.org.br","G_JAX_EDSI_Logistics@atl.embraer.com","G_JAX_EDSI_Logistics@mel.embraer.com","G_JAX_EDSI_Logistics@pee.embraer.com.br","G_JAX_EDSI_Logistics@embraer.com","G_JAX_EDSI_Logistics@bjs.embraer.com","G_JAX_EDSI_Logistics@abraba.com.br","G_JAX_EDSI_Logistics@embraer.com.br"
+
+"G_EMB_Supervisor_-_JAX@embraer.onmicrosoft.com","G_EMB_Supervisor_-_JAX@aerochain.com","G_EMB_Supervisor_-_JAX@bjs.embraer.com","G_EMB_Supervisor_-_JAX@eccleasing.com","G_EMB_Supervisor_-_JAX@embraer.com.br","G_EMB_Supervisor_-_JAX@embraer.fr","G_EMB_Supervisor_-_JAX@embraerexecutivejets.com","G_EMB_Supervisor_-_JAX@embraerfoundation.org","G_EMB_Supervisor_-_JAX@globmail.com.br","G_EMB_Supervisor_-_JAX@ie.embraer.com","G_EMB_Supervisor_-_JAX@nl.embraer.com","G_EMB_Supervisor_-_JAX@pee.embraer.com.br","G_EMB_Supervisor_-_JAX@press.embraer.com.br","G_EMB_Supervisor_-_JAX@pt.embraer.com","G_EMB_Supervisor_-_JAX@sin.embraer.com","G_EMB_Supervisor_-_JAX@embraer.com"
+
+$email = "suporte.bot@embraer.com.br"
+
+foreach ($valor in $alias){Set-DistributionGroup -identity $email -EmailAddresses @{add = $valor} -ErrorAction Continue}
+
+Get-DistributionGroup -identity $email | select -ExpandProperty emailaddresses  
+
+
+
+
+$validar = "D_FLL_FLL Planning", "G_FLL_ITOPERATIONS", "G_FLL_Network_Notifications", "G_FLL_Software_Licensing", "G_JAX_EDSI Logistics", "logistics.lbg", "suporte.bot"
+
+foreach ($email in $validar) {
+$i = $i+1 
+Get-DistributionGroup -identity $ | select display name -ExpandProperty emailaddresses |
+

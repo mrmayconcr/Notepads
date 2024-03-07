@@ -1,0 +1,189 @@
+class DadosSensor {
+    private String tipo;
+    private double valor;
+    private String hora;
+
+    public DadosSensor(String tipo, double valor, String hora) {
+        this.tipo = tipo;
+        this.valor = valor;
+        this.hora = hora;
+    }
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public double getValor() {
+        return valor;
+    }
+
+    public String getHora() {
+        return hora;
+    }
+}
+
+class Ambiente {
+    private static final int MAX_LINHAS = 48;
+
+    private DadosSensor[][] dadosTemperatura;
+    private int linhaTemperatura;
+    private int colunaTemperatura;
+    private DadosSensor[][] dadosUmidade;
+    private int linhaUmidade;
+    private int colunaUmidade;
+    private DadosSensor[][] dadosCO2;
+    private int linhaCO2;
+    private int colunaCO2;
+
+    public Ambiente(int colunas) {
+        dadosTemperatura = new DadosSensor[MAX_LINHAS][colunas];
+        linhaTemperatura = 0;
+        colunaTemperatura = 0;
+        dadosUmidade = new DadosSensor[MAX_LINHAS][colunas];
+        linhaUmidade = 0;
+        colunaUmidade = 0;
+        dadosCO2 = new DadosSensor[MAX_LINHAS][colunas];
+        linhaCO2 = 0;
+        colunaCO2 = 0;
+    }
+
+    public void adicionarDadosTemperatura(DadosSensor dados) {
+        if (linhaTemperatura < dadosTemperatura.length && colunaTemperatura < dadosTemperatura[linhaTemperatura].length) {
+            dadosTemperatura[linhaTemperatura][colunaTemperatura++] = dados;
+
+            if (colunaTemperatura == dadosTemperatura[linhaTemperatura].length) {
+                colunaTemperatura = 0;
+                linhaTemperatura++;
+            }
+
+            ordenarDadosTemperatura();
+            imprimirDadosTemperatura();
+        }
+    }
+
+    public void adicionarDadosUmidade(DadosSensor dados) {
+        if (linhaUmidade < dadosUmidade.length && colunaUmidade < dadosUmidade[linhaUmidade].length) {
+            dadosUmidade[linhaUmidade][colunaUmidade++] = dados;
+
+            if (colunaUmidade == dadosUmidade[linhaUmidade].length) {
+                colunaUmidade = 0;
+                linhaUmidade++;
+            }
+
+            ordenarDadosUmidade();
+            imprimirDadosUmidade();
+        }
+    }
+
+    public void adicionarDadosCO2(DadosSensor dados) {
+        if (linhaCO2 < dadosCO2.length && colunaCO2 < dadosCO2[linhaCO2].length) {
+            dadosCO2[linhaCO2][colunaCO2++] = dados;
+
+            if (colunaCO2 == dadosCO2[linhaCO2].length) {
+                colunaCO2 = 0;
+                linhaCO2++;
+            }
+
+            ordenarDadosCO2();
+            imprimirDadosCO2();
+        }
+    }
+
+    private void ordenarDadosTemperatura() {
+        for (int i = 0; i < linhaTemperatura; i++) {
+            for (int j = 0; j < colunaTemperatura; j++) {
+                for (int k = i; k < linhaTemperatura; k++) {
+                    for (int l = j + 1; l < colunaTemperatura; l++) {
+                        if (dadosTemperatura[i][j].getValor() > dadosTemperatura[k][l].getValor()) {
+                            DadosSensor temp = dadosTemperatura[i][j];
+                            dadosTemperatura[i][j] = dadosTemperatura[k][l];
+                            dadosTemperatura[k][l] = temp;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void imprimirDadosTemperatura() {
+        for (int i = 0; i < linhaTemperatura; i++) {
+            for (int j = 0; j < colunaTemperatura; j++) {
+                if (dadosTemperatura[i][j] != null) {
+                    System.out.println(dadosTemperatura[i][j].getTipo() + ": " + dadosTemperatura[i][j].getValor() + " at " + dadosTemperatura[i][j].getHora());
+                }
+            }
+        }
+    }
+
+    private void ordenarDadosUmidade() {
+        for (int i = 0; i < linhaUmidade; i++) {
+            for (int j = 0; j < colunaUmidade; j++) {
+                for (int k = i; k < linhaUmidade; k++) {
+                    for (int l = j + 1; l < colunaUmidade; l++) {
+                        if (dadosUmidade[i][j].getValor() < dadosUmidade[k][l].getValor()) {
+                            DadosSensor temp = dadosUmidade[i][j];
+                            dadosUmidade[i][j] = dadosUmidade[k][l];
+                            dadosUmidade[k][l] = temp;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void imprimirDadosUmidade() {
+        for (int i = 0; i < linhaUmidade; i++) {
+            for (int j = 0; j < colunaUmidade; j++) {
+                if (dadosUmidade[i][j] != null) {
+                    System.out.println(dadosUmidade[i][j].getTipo() + ": " + dadosUmidade[i][j].getValor() + " at " + dadosUmidade[i][j].getHora());
+                }
+            }
+        }
+    }
+
+    private void ordenarDadosCO2() {
+        for (int i = 0; i < linhaCO2; i++) {
+            for (int j = 0; j < colunaCO2; j++) {
+                for (int k = i; k < linhaCO2; k++) {
+                    for (int l = j + 1; l < colunaCO2; l++) {
+                        if (dadosCO2[i][j].getValor() > dadosCO2[k][l].getValor()) {
+                            DadosSensor temp = dadosCO2[i][j];
+                            dadosCO2[i][j] = dadosCO2[k][l];
+                            dadosCO2[k][l] = temp;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void imprimirDadosCO2() {
+        for (int i = 0; i < linhaCO2; i++) {
+            for (int j = 0; j < colunaCO2; j++) {
+                if (dadosCO2[i][j] != null) {
+                    System.out.println(dadosCO2[i][j].getTipo() + ": " + dadosCO2[i][j].getValor() + " at " + dadosCO2[i][j].getHora());
+                }
+            }
+        }
+
+
+	public void iniciarTemporizador() {
+        long horaInicio = System.currentTimeMillis();
+        long intervalo = 30 * 60 * 1000; // 30 minutos em milissegundos
+
+        while (true) {
+            long horaAtual = System.currentTimeMillis();
+            long tempoDecorrido = horaAtual - horaInicio;
+
+            if (tempoDecorrido >= intervalo) {
+                // Chame os métodos de registro de dados aqui
+                // Por exemplo:
+                adicionarDadosTemperatura(new DadosSensor("Temperatura", 25.0, "12:00"));
+                adicionarDadosUmidade(new DadosSensor("Umidade", 50.0, "12:00"));
+                adicionarDadosCO2(new DadosSensor("CO2", 400.0, "12:00"));
+
+                horaInicio = horaAtual;
+            }
+        }
+    }
+}

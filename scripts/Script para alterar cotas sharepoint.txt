@@ -1,0 +1,41 @@
+# Definir o csv
+$csvFilePath = ".\governancasharepoint11-20-23.csv"
+
+function Export-CSVInfo {
+    param(
+        [string]$oldValue,
+        [string]$newValue,
+        [string]$siteName,
+        [string]$siteUrl
+    )
+    $csvData = "$oldValue,$newValue,$siteName,$siteUrl"
+    $csvData | Out-File -FilePath $csvFilePath -Append -Encoding utf8
+}
+
+# cotas dos sites
+Write-Host "Iniciando ajustes de cotas de armazenamento..."
+
+# Sites com armazenamento inferior a 50GB
+Get-SPOSite -Limit ALL | Where-Object { $_.StorageUsageCurrent -lt 51200 } | ForEach-Object {
+    $oldQuota = $_.StorageQuota
+    $siteName = $_.Title
+    $siteUrl = $_.Url
+    Write-Host "Atualizando site '$siteName' de cota '$oldQuota' para '51200'..."
+    Set-SPOSite -Identity $_.Url -StorageQuota 51200 -StorageQuotaWarningLevel 41200 -Confirm:$false
+    Export-CSVInfo -oldValue $oldQuota -newValue '51200' -siteName $siteName -siteUrl $siteUrl
+}
+
+# Sites com armazenamento entre 50GB e 200GB
+Get-SPOSite -Limit ALL | Where-Object { $_.StorageUsageCurrent -ge 51200 -and $_.StorageUsageCurrent -lt 204800 } | ForEach-Object {
+    $oldQuota = $_.StorageQuota
+    $oldStorage = $_.StorageUsageCurrent
+    $siteName = $_.Title
+    $siteUrl = $_.Url
+    $newQuota = $oldStorage + 20480
+    $newWarning = $newQuota - 10240
+    Write-Host "Atualizando site '$siteName' de cota '$oldQuota' e armazenamento '$oldStorage' para '$newQuota'..."
+    Set-SPOSite -Identity $_.Url -StorageQuota $newQuota -StorageQuotaWarningLevel $newWarning -Confirm:$false
+    Export-CSVInfo -oldValue $oldQuota -newValue $newQuota -siteName $siteName -siteUrl $siteUrl
+}
+
+Write-Host "Ajustes de cotas de armazenamento concluídos!"

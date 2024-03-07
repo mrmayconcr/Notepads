@@ -1,0 +1,16 @@
+$grupos = import-csv .\EMEA.csv | select UserPrincipalName, Id
+$grupos2 = $grupos
+$dados = @()
+$grupos2 | foreach-object {Get-AzureADUserOwnedObject -ObjectId $_.id | Select objectid, displayname
+$dados += New-object -TypeName PSObject -Property @{
+objectiduser = $_.id
+email = $_.id
+grupoid = $nomedosgrupos.objectid -join "; "
+gruponame = $nomedosgrupos.displayname -join "; "
+}
+}
+
+
+
+$grupos = import-csv .\EMEA.csv | select UserPrincipalName, Id
+$Office365GroupsOwner = Get-UnifiedGroup | where { (Get-UnifiedGroupLinks $_.Alias -LinkType Owners| foreach {$_.name}) -contains $grupos.UserPrincipalName}

@@ -1,0 +1,125 @@
+# Install and import ExchangeOnlineManagement module if not already installed
+if (-not (Get-Module -Name ExchangeOnlineManagement)) {
+    Install-Module -Name ExchangeOnlineManagement -Force -AllowClobber
+}
+
+# Connect to Exchange Online PowerShell
+Connect-ExchangeOnline -ShowProgress $true
+
+# Define the dynamic distribution groups
+#$groups = @("DG_EMB EVE", "DG_EMB GERENTES - MLB", "DDG_MLB_ALL")
+$groups = get-dynamicdistributiongroup -resultsize Unlimited
+
+# Create an empty hashtable to store members of each group
+$groupMembers = @{}
+
+# Retrieve members of each group
+foreach ($group in $groups) {
+    $members = Get-DynamicDistributionGroupMember -Identity $group -resultsize Unlimited | Select-Object -ExpandProperty PrimarySmtpAddress
+    $groupMembers[$group] = $members
+}
+
+# Find the maximum count of members among all groups
+$maxCount = ($groupMembers.GetEnumerator() | ForEach-Object { $_.Value.Count }) | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum
+
+# Create an array to store data for export
+$data = @()
+
+# Construct the data array
+for ($i = 0; $i -lt $maxCount; $i++) {
+    $rowData = New-Object -TypeName PSObject
+    foreach ($group in $groups) {
+        if ($i -lt $groupMembers[$group].Count) {
+            $rowData | Add-Member -MemberType NoteProperty -Name $group -Value $groupMembers[$group][$i]
+        } else {
+            $rowData | Add-Member -MemberType NoteProperty -Name $group -Value ""
+        }
+    }
+    $data += $rowData
+}
+
+# Export data to CSV file
+$data | Export-Csv -Path ".\teste18.csv" -NoTypeInformation
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Obter todos os grupos de distribuição dinâmicos
+$DynamicDistributionGroups = Get-DynamicDistributionGroup -ResultSize Unlimited
+
+# Inicializar um hashtable para armazenar os membros de cada grupo
+$GroupMembers = @{}
+
+# Iterar sobre todos os grupos de distribuição dinâmicos
+foreach ($Group in $DynamicDistributionGroups) {
+    # Obter os membros do grupo
+    $Members = Get-Recipient -RecipientPreviewFilter $Group.RecipientFilter -RecipientTypeDetails UserMailbox -ResultSize Unlimited | Select Name, PrimarySmtpAddress
+
+    # Adicionar membros ao hashtable
+    $GroupMembers[$Group.Name] = $Members
+}
+
+# Construir a matriz de resultados
+$Results = @()
+$Results += 'Grupo 1', 'Grupo 2'
+foreach ($Member in $GroupMembers.Keys) {
+    for ($i = 0; $i -lt $GroupMembers[$Member].Count; $i++) {
+        $Results += $GroupMembers['Grupo 1'][$i].Name, $GroupMembers['Grupo 2'][$i].Name
+    }
+}
+
+# Exportar os resultados para um arquivo CSV
+$Results | export-csv .\Janeiro.csv -notypeinformation

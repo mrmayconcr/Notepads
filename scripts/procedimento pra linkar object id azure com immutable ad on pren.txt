@@ -1,0 +1,89 @@
+# Solicita o e-mail do usuário
+$email = Read-Host "Informe o e-mail do usuário: "
+
+# Captura o valor antigo do ImmutableID
+$immutableIdAntigo = (Get-AzureADUser -ObjectID $email | Select-Object -ExpandProperty ImmutableId)
+
+# Solicita o novo valor do ImmutableID
+$immutableIdNovo = Read-Host "Informe o novo valor do ImmutableID: "
+
+# Atualiza o valor do ImmutableID
+Set-AzureADUser -ObjectID $email -ImmutableId $immutableIdNovo
+
+# Captura o novo valor do ImmutableID
+$immutableIdNovo = (Get-AzureADUser -ObjectID $email | Select-Object -ExpandProperty ImmutableId)
+
+# Exibe um log das ações realizadas
+Write-Host "### Atualização do ImmutableID ###"
+
+# Cor do texto antigo
+Write-Host "Valor antigo do ImmutableID: $immutableIdAntigo" -ForegroundColor Yellow
+
+# Cor do texto novo
+Write-Host "Novo valor do ImmutableID: $immutableIdNovo" -ForegroundColor Green
+
+# Cor do texto alterado
+Write-Host "Valor alterado de: $immutableIdAntigo para: $immutableIdNovo" -ForegroundColor Blue
+
+Write-Host "### Fim da atualização ###"
+
+
+
+
+
+
+
+
+
+
+
+
+-----------------------
+Usuário: ivan.conceicao@embraer.com 
+
+ID Original OnPremises (ObjectGuid do AD Local)
+12 E8 80 B1 F8 3A 9A 48 81 CF A9 20 52 F1 69 7F
+
+Site para converter ObjectGuid: https://tomeko.net/online_tools/hex_to_base64.php 
+
+ID Convert
+wlytvQhPHUOdjRnz63jHjg==
+
+Object ID Azure
+b918d609-255b-492b-8e48-4305d575e215
+
+Get-AzureADUser -ObjectId b918d609-255b-492b-8e48-4305d575e215 | select ImmutableID 
+Set-AzureADUser -objectID 83d42b5b-2b49-4c81-abb4-3d5b724b3902 -ImmutableId 0Aw+P8fA0EqOh5PWrBDCPQ==
+
+
+
+wZAPfF3h26%0zrH
+10.133.17.29
+
+LOGIN: DCARNOL
+E-MAIL:denem.arnold@embraer.com
+mS-DS-ConsistencyGuid = Em branco
+objectGUID= D0 CE 65 0C 72 89 E9 4E 90 F7 B5 2F 15 BF CD F0
+Chamado de referência= 6711356
+
+0M5lDHKJ6U6Q97UvFb/N8A==
+
+
+
+
+
+
+
+
+Precisamos associar a conta de e-mail jennifer.leslie@nl.embraer.com, que está na lixeira do Office, ao login JENNLESL.
+mS-DS-ConsistencyGuid = em branco
+objectGUID = C2 4D F7 6A D8 88 89 43 B6 3B B7 6E 5F 1F 26 32
+
+
+
+
+PS C:\Windows\system32> Get-AzureADUser -ObjectId maycon.rocha@globmail.com.br | select ImmutableID 
+
+ImmutableId
+-----------
+jJjFUDvcT0OPNDHqJMstwg==

@@ -1,0 +1,25 @@
+$SiteURL = "https://embraer.sharepoint.com/sites/RAPA389/"
+$LibraryName ="PreservationHoldLibrary"
+ 
+#Connect to PnP Online
+Connect-PnPOnline -Url $SiteURL -Interactive
+ 
+#Get the Library
+$Library = Get-PnPList -Identity $LibraryName
+       
+#Check if document Library exist
+If($Library -ne $Null)
+{
+    #Set Allow Deletion Property to True
+    $Library.AllowDeletion = $True
+    $Library.Update()
+    Invoke-PnPQuery
+ 
+    #powershell to remove document library
+    Remove-PnPList -Identity $LibraryName -Force -recycle
+    Write-host -f Green "Preservation Hold Library Deleted Successfully!"
+}
+Else
+{
+    Write-host -f Yellow "Could not find Preservation Hold Library!"
+}
