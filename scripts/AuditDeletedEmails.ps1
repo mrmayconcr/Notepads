@@ -205,7 +205,7 @@ while($true)
  if($CurrentResultCount -ge 50000)
  {
   Write-Host Retrieved max record for current range.Proceeding further may cause data loss or rerun the script with reduced time interval. -ForegroundColor Red
-  $Confirm=Read-Host `nAre you sure you want to continue? [Y] Yes [N] No
+  $Confirm="[Y]"
   if($Confirm -match "[Y]")
   {
    Write-Host Proceeding audit log collection with data loss
